@@ -1,0 +1,19 @@
+services:
+  api:
+    build: .
+    image: marine-zone-crossing:latest
+    container_name: marine-zone-crossing
+    environment:
+      # 监听地址与端口（容器内）
+      API_HOST: "0.0.0.0"
+      API_PORT: "8080"
+    ports:
+      # 宿主机端口:容器端口。修改左侧即可改宿主机映射端口
+      - "${HOST_PORT:-8080}:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import os,urllib.request,sys;port=os.getenv('API_PORT','8080');sys.exit(0 if urllib.request.urlopen(f'http://127.0.0.1:{port}/health', timeout=3).status==200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
