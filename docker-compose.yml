@@ -1,0 +1,25 @@
+services:
+  mpa-crossing-api:
+    build: .
+    image: mpa-crossing-api:latest
+    # 宿主机端口默认 8000，可用 APP_PORT 覆盖：APP_PORT=9000 docker compose up
+    ports:
+      - "${APP_PORT:-8000}:8000"
+    environment:
+      # 设为 1 可在每次启动时运行自检（默认关闭）
+      RUN_TESTS_ON_START: "${RUN_TESTS_ON_START:-0}"
+      UVICORN_WORKERS: "${UVICORN_WORKERS:-1}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+    command: >
+      sh -c "exec uvicorn app.main:app
+      --host 0.0.0.0
+      --port 8000
+      --workers $${UVICORN_WORKERS:-1}
+      --log-level $${LOG_LEVEL:-info}"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3).status == 200 else 1)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
